@@ -1,5 +1,6 @@
 import logging
 import re
+from collections import Counter
 from urllib.parse import urljoin
 
 import requests_cache
@@ -10,7 +11,6 @@ from configs import configure_argument_parser, configure_logging
 from constants import BASE_DIR, EXPECTED_STATUS, MAIN_DOC_URL, PEP_LIST_URL
 from outputs import control_output
 from utils import find_tag, get_response
-from collections import Counter
 
 PATTERN = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
 FILE = r'.+pdf-a4\.zip$'
