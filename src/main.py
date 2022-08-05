@@ -17,6 +17,7 @@ FILE = r'.+pdf-a4\.zip$'
 
 
 def whats_new(session):
+    """Получение перечня версий Python со ссылками на список изменений."""
     whats_new_url = urljoin(MAIN_DOC_URL, 'whatsnew/')
     response = get_response(session, whats_new_url)
     if response is None:
@@ -42,6 +43,7 @@ def whats_new(session):
 
 
 def latest_versions(session):
+    """Получение ссылок на документацию Python для всех версий."""
     response = get_response(session, MAIN_DOC_URL)
     if response is None:
         return
@@ -67,6 +69,7 @@ def latest_versions(session):
 
 
 def download(session):
+    """Загрузка архива с документацией на последнюю версию Python."""
     downloads_url = urljoin(MAIN_DOC_URL, 'download.html')
     response = get_response(session, downloads_url)
     if response is None:
@@ -86,6 +89,7 @@ def download(session):
 
 
 def pep(session):
+    """Подсчет PEP по статусам."""
     response = get_response(session, PEP_LIST_URL)
     if response is None:
         return
@@ -98,7 +102,15 @@ def pep(session):
     results = [('Статус', 'Количество')]
     for pep_line in tqdm(pep_lines):
         total_pep_count += 1
-        status_ext = EXPECTED_STATUS[pep_line.find('td').text[1:]]
+        short_status = pep_line.find('td').text[1:]
+        try:
+            status_ext = EXPECTED_STATUS[short_status]
+        except KeyError:
+            status_ext = []
+            logging.info(
+                f'\nОшибочный статус в общем списке: {short_status}\n'
+                f'Строка PEP: {pep_line}'
+            )
         link = find_tag(pep_line, 'a')['href']
         full_link = urljoin(PEP_LIST_URL, link)
         response = get_response(session, full_link)
@@ -134,14 +146,13 @@ def pep(session):
     else:
         results.append(('Total', total_pep_count))
     return results
-    # print(results)
 
 
 MODE_TO_FUNCTION = {
     'whats-new': whats_new,
     'latest-versions': latest_versions,
     'download': download,
-    'pep_parser': pep,
+    'pep': pep,
 }
 
 
