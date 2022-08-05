@@ -7,9 +7,10 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
-from constants import BASE_DIR, MAIN_DOC_URL
+from constants import BASE_DIR, EXPECTED_STATUS, MAIN_DOC_URL, PEP_LIST_URL
 from outputs import control_output
 from utils import find_tag, get_response
+from collections import Counter
 
 PATTERN = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
 FILE = r'.+pdf-a4\.zip$'
@@ -24,7 +25,7 @@ def whats_new(session):
     main_div = find_tag(soup, 'section', attrs={'id': 'what-s-new-in-python'})
     div_ul = find_tag(main_div, 'div', attrs={'class': 'toctree-wrapper'})
     sections_by_python = div_ul.find_all('li', attrs={'class': 'toctree-l1'})
-    result = [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
+    result = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор')]
     for section in tqdm(sections_by_python):
         a_tag = section.find('a')
         href = a_tag['href']
@@ -84,10 +85,63 @@ def download(session):
     logging.info(f'Архив был загружен и сохранён: {archive_path}')
 
 
+def pep(session):
+    response = get_response(session, PEP_LIST_URL)
+    if response is None:
+        return
+    soup = BeautifulSoup(response.text, 'lxml')
+    num_index = find_tag(soup, 'section', attrs={'id': 'numerical-index'})
+    pep_list = find_tag(num_index, 'tbody')
+    pep_lines = pep_list.find_all('tr')
+    total_pep_count = 0
+    status_counter = Counter()
+    results = [('Статус', 'Количество')]
+    for pep_line in tqdm(pep_lines):
+        total_pep_count += 1
+        status_ext = EXPECTED_STATUS[pep_line.find('td').text[1:]]
+        link = find_tag(pep_line, 'a')['href']
+        full_link = urljoin(PEP_LIST_URL, link)
+        response = get_response(session, full_link)
+        if response is None:
+            return
+        soup = BeautifulSoup(response.text, 'lxml')
+        dl_tag = find_tag(soup, 'dl')
+        status_line = dl_tag.find(string='Status')
+        if not status_line:
+            logging.error(f'{full_link} - не найдена строка статуса')
+            continue
+        else:
+            status_line = status_line.find_parent()
+            status_int = status_line.next_sibling.next_sibling.string
+            if status_int not in status_ext:
+                logging.info(
+                    '\nНесовпадение статусов:\n'
+                    f'{full_link}\n'
+                    f'Статус в карточке - {status_int}\n'
+                    f'Ожидаемые статусы - {status_ext}'
+                )
+            status_counter[status_int] += 1
+    for status, count in status_counter.items():
+        results.append((status, count))
+    sum_from_cards = sum(status_counter.values())
+    if total_pep_count != sum_from_cards:
+        logging.error(
+            f'\n Ошибка в сумме:\n'
+            f'Всего PEP: {total_pep_count}'
+            f'Всего статусов из карточек: {sum_from_cards}'
+        )
+        results.append(('Total', sum_from_cards))
+    else:
+        results.append(('Total', total_pep_count))
+    return results
+    # print(results)
+
+
 MODE_TO_FUNCTION = {
     'whats-new': whats_new,
     'latest-versions': latest_versions,
     'download': download,
+    'pep_parser': pep,
 }
 
 
