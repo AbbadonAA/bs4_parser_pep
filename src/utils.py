@@ -2,7 +2,7 @@ import logging
 
 from requests import RequestException
 
-from exceptions import ParserFindTagException
+from exceptions import ParserFindTagException, EmptyResponseEception
 
 
 def get_response(session, url):
@@ -10,6 +10,8 @@ def get_response(session, url):
     try:
         response = session.get(url)
         response.encoding = 'utf-8'
+        if response is None:
+            raise EmptyResponseEception(f'Ответ от {url} не получен.')
         return response
     except RequestException:
         logging.exception(

@@ -20,8 +20,6 @@ def whats_new(session):
     """Получение перечня версий Python со ссылками на список изменений."""
     whats_new_url = urljoin(MAIN_DOC_URL, 'whatsnew/')
     response = get_response(session, whats_new_url)
-    if response is None:
-        return
     soup = BeautifulSoup(response.text, 'lxml')
     main_div = find_tag(soup, 'section', attrs={'id': 'what-s-new-in-python'})
     div_ul = find_tag(main_div, 'div', attrs={'class': 'toctree-wrapper'})
@@ -32,8 +30,6 @@ def whats_new(session):
         href = a_tag['href']
         link = urljoin(whats_new_url, href)
         response = get_response(session, link)
-        if response is None:
-            continue
         soup = BeautifulSoup(response.text, 'lxml')
         h1 = find_tag(soup, 'h1')
         dl = find_tag(soup, 'dl')
@@ -45,8 +41,6 @@ def whats_new(session):
 def latest_versions(session):
     """Получение ссылок на документацию Python для всех версий."""
     response = get_response(session, MAIN_DOC_URL)
-    if response is None:
-        return
     soup = BeautifulSoup(response.text, 'lxml')
     sidebar = find_tag(soup, 'div', attrs={'class': 'sphinxsidebarwrapper'})
     ul_tags = sidebar.find_all('ul')
@@ -72,8 +66,6 @@ def download(session):
     """Загрузка архива с документацией на последнюю версию Python."""
     downloads_url = urljoin(MAIN_DOC_URL, 'download.html')
     response = get_response(session, downloads_url)
-    if response is None:
-        return
     soup = BeautifulSoup(response.text, 'lxml')
     link_table = find_tag(soup, 'table')
     pdf_a4_tag = find_tag(link_table, 'a', attrs={'href': re.compile(FILE)})
@@ -91,8 +83,6 @@ def download(session):
 def pep(session):
     """Подсчет PEP по статусам."""
     response = get_response(session, PEP_LIST_URL)
-    if response is None:
-        return
     soup = BeautifulSoup(response.text, 'lxml')
     num_index = find_tag(soup, 'section', attrs={'id': 'numerical-index'})
     pep_list = find_tag(num_index, 'tbody')
@@ -114,27 +104,23 @@ def pep(session):
         link = find_tag(pep_line, 'a')['href']
         full_link = urljoin(PEP_LIST_URL, link)
         response = get_response(session, full_link)
-        if response is None:
-            return
         soup = BeautifulSoup(response.text, 'lxml')
         dl_tag = find_tag(soup, 'dl')
         status_line = dl_tag.find(string='Status')
         if not status_line:
             logging.error(f'{full_link} - не найдена строка статуса')
             continue
-        else:
-            status_line = status_line.find_parent()
-            status_int = status_line.next_sibling.next_sibling.string
-            if status_int not in status_ext:
-                logging.info(
-                    '\nНесовпадение статусов:\n'
-                    f'{full_link}\n'
-                    f'Статус в карточке - {status_int}\n'
-                    f'Ожидаемые статусы - {status_ext}'
-                )
-            status_counter[status_int] += 1
-    for status, count in status_counter.items():
-        results.append((status, count))
+        status_line = status_line.find_parent()
+        status_int = status_line.next_sibling.next_sibling.string
+        if status_int not in status_ext:
+            logging.info(
+                '\nНесовпадение статусов:\n'
+                f'{full_link}\n'
+                f'Статус в карточке - {status_int}\n'
+                f'Ожидаемые статусы - {status_ext}'
+            )
+        status_counter[status_int] += 1
+    results.extend(status_counter.items())
     sum_from_cards = sum(status_counter.values())
     if total_pep_count != sum_from_cards:
         logging.error(

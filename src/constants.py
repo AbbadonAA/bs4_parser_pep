@@ -14,3 +14,7 @@ EXPECTED_STATUS = {
     'W': ['Withdrawn'],
     '': ['Draft', 'Active'],
 }
+LOG_DIR = BASE_DIR / 'logs'
+LOG_FILE = LOG_DIR / 'parser.log'
+LOG_FORMAT = '"%(asctime)s - [%(levelname)s] - %(message)s"'
+DT_LOG_FORMAT = '%d.%m.%Y %H:%M:%S'
