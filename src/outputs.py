@@ -9,13 +9,15 @@ from constants import BASE_DIR, DATETIME_FORMAT
 
 def control_output(results, cli_args):
     """Выбор формата вывода."""
+    outputs = {
+        'pretty': pretty_output,
+        'file': file_output,
+        '': default_output
+    }
     output = cli_args.output
-    if output == 'pretty':
-        pretty_output(results)
-    elif output == 'file':
-        file_output(results, cli_args)
-    else:
-        default_output(results)
+    if not output:
+        output = ''
+    outputs[output](results, cli_args)
 
 
 def file_output(results, cli_args):
@@ -33,7 +35,7 @@ def file_output(results, cli_args):
     logging.info(f'Файл с результатами был сохранён: {file_path}')
 
 
-def pretty_output(results):
+def pretty_output(results, cli_args):
     """Вывод результата в табличной форме в терминал."""
     try:
         table = PrettyTable()
@@ -45,7 +47,7 @@ def pretty_output(results):
         logging.error(f'Возникла ошибка вывода: {error}')
 
 
-def default_output(results):
+def default_output(results, cli_args):
     """Построчный вывод в терминал."""
     for row in results:
         print(*row)
