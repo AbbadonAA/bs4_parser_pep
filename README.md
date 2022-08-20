@@ -19,12 +19,13 @@
 
 Настроено логирование - логи выводятся в терминал и сохраняются в отдельной директории с ротацией.
 
-## Освоенные в данном проекте библиотеки:
-- BeautifulSoup;
-- requests_cache;
-- argparse;
-- prettytable;
-- tqdm.
+## Технологии и библиотеки:
+- [Python](https://www.python.org/);
+- [BeautifulSoup](https://pypi.org/project/beautifulsoup4/);
+- [requests_cache](https://pypi.org/project/requests-cache/);
+- [argparse](https://docs.python.org/3/library/argparse.html);
+- [prettytable](https://pypi.org/project/prettytable/);
+- [tqdm](https://pypi.org/project/tqdm/).
 
 ## Установка
 1. Склонируйте репозиторий:
