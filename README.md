@@ -19,7 +19,7 @@
 
 Настроено логирование - логи выводятся в терминал и сохраняются в отдельной директории с ротацией.
 
-## Технологии и библиотеки:
+## Ключевые технологии и библиотеки:
 - [Python](https://www.python.org/);
 - [BeautifulSoup](https://pypi.org/project/beautifulsoup4/);
 - [requests_cache](https://pypi.org/project/requests-cache/);
